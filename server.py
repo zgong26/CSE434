@@ -45,7 +45,7 @@ while True:
 	if command == "setup-dht":
 		n = message.split(" ")[1]
 		name = message.split(" ")[2]
-		if DHT_setup == False or n < 2 or not userDict.has_key(name) or n > len(userDict):
+		if DHT_setup == True or n < 2 or not userDict.has_key(name) or n > len(userDict):
 			sSocket.sendto("FAILURE".encode(), cAddress)
 		else:
 			userDict[name][2] = "Leader"
@@ -61,7 +61,7 @@ while True:
 			sSocket.sendto("SUCCESS".encode(), cAddress)	
 	if command == "dht-complete":
 		name = message.split(" ")[1]
-		if(userDict[name][2] != "Free"):
+		if(userDict[name][2] != "Leader"):
 			sSocket.sendto("FAILURE".encode(), cAddress)
 		else:
 			sSocket.sendto("SUCCESS".encode(), cAddress)				
