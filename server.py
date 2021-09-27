@@ -64,4 +64,12 @@ while True:
 		if(userDict[name][2] != "Leader"):
 			sSocket.sendto("FAILURE".encode(), cAddress)
 		else:
-			sSocket.sendto("SUCCESS".encode(), cAddress)				
+			sSocket.sendto("SUCCESS".encode(), cAddress)
+
+	if command == "query-dht":
+		name = message.split(" ")[1]
+		if(DHT_setup == false or name not in userDict or userDict[name][2] != "Free"):
+			sSocket.sendto("FAILURE".encode(), cAddress)
+		else:
+			sSocket.sendto("SUCCESS".encode(), cAddress)
+			sSocket.sendto(DHTList[random.randrange(0, len(DHTList), 1)].encode(), cAddress)
