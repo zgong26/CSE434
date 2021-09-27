@@ -1,7 +1,11 @@
 import sys
+import random
 from socket import *
 
 userDict = {}
+DHTList = []
+DHT_setup = False
+ifSettingup = False
 
 print("Port number: ",end="")
 port = int(input())
@@ -22,7 +26,7 @@ while True:
 				if userDict[key][0] == IPv4 and userDict[key][1] == port:
 					sSocket.sendto("FAILURE".encode(), cAddress)
 				else:
-					userDict[name] = [IPv4, port, "FREE"]
+					userDict[name] = [IPv4, port, "Free"]
 					sSocket.sendto("SUCCESS".encode(), cAddress)
 			
 		else:
@@ -31,10 +35,33 @@ while True:
 	if command == "deregister":
 		name = message.split(" ")[1]
 		if userDict.has_key(name):
-			if userDict[name][2] == "FREE":
+			if userDict[name][2] == "Free":
 				del userDict[name]
 				sSocket.sendto("SUCCESS".encode(), cAddress)
 			else:
 				sSocket.sendto("FAILURE".encode(), cAddress)
 		else:
 			sSocket.sendto("FAILURE".encode(), cAddress)
+	if command == "setup-dht":
+		n = message.split(" ")[1]
+		name = message.split(" ")[2]
+		if DHT_setup == False or n < 2 or not userDict.has_key(name) or n > len(userDict):
+			sSocket.sendto("FAILURE".encode(), cAddress)
+		else:
+			userDict[name][2] = "Leader"
+			DHTList.append(name, userDict[name][0], userDict[name][1])
+			tempDict = userDict.copy()
+			del tempDict[name]
+			list(tempDict.keys())
+			selectedName = random.sample(list, k=(n-1))
+			for w in selectedName:
+				userDict[w][2] = "InDHT"
+				DHTList.append(w, userDict[w][0], userDict[w][1])
+			DHT_setup = True
+			sSocket.sendto("SUCCESS".encode(), cAddress)	
+	if command == "dht-complete":
+		name = message.split(" ")[1]
+		if(userDict[name][2] != "Free"):
+			sSocket.sendto("FAILURE".encode(), cAddress)
+		else:
+			sSocket.sendto("SUCCESS".encode(), cAddress)				
