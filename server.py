@@ -2,25 +2,32 @@ import sys
 import random
 from socket import *
 
+#dictionary for registered clients
 userDict = {}
 DHTList = []
+#if DHT has been setup
 DHT_setup = False
+#if DHT is under settingup
 ifSettingup = False
 
 print("Port number: ",end="")
 port = int(input())
+#socket used to bind the port
 sSocket = socket(AF_INET, SOCK_DGRAM)
 sSocket.bind(("", port))
 print("Server is now receiving from port", port)
 
 while True:
 	oriMessage, cAddress = sSocket.recvfrom(2048)
+    #decode messages
 	message = oriMessage.decode()
 	command = message.split(" ")[0]
+
 	if command == "register":
 		name = message.split(" ")[1]
 		IPv4 = message.split(" ")[2]
 		port = message.split(" ")[3]
+        #check if name exists and if same ip and port exist
 		if name not in userDict:
 			for key in userDict:
 				if userDict[key][0] == IPv4 and userDict[key][1] == port:
@@ -34,6 +41,7 @@ while True:
 		
 	if command == "deregister":
 		name = message.split(" ")[1]
+        #check if the name exists and the status of the client
 		if userDict.has_key(name):
 			if userDict[name][2] == "Free":
 				del userDict[name]
@@ -42,6 +50,7 @@ while True:
 				sSocket.sendto("FAILURE".encode(), cAddress)
 		else:
 			sSocket.sendto("FAILURE".encode(), cAddress)
+            
 	if command == "setup-dht":
 		n = message.split(" ")[1]
 		name = message.split(" ")[2]
@@ -49,6 +58,7 @@ while True:
 			sSocket.sendto("FAILURE".encode(), cAddress)
 		else:
 			userDict[name][2] = "Leader"
+            #append the leader to the first part of DHT
 			DHTList.append(name, userDict[name][0], userDict[name][1])
 			tempDict = userDict.copy()
 			del tempDict[name]
@@ -68,6 +78,7 @@ while True:
 
 	if command == "query-dht":
 		name = message.split(" ")[1]
+        #check if DHT has already been setup, name exists and the status
 		if(DHT_setup == false or name not in userDict or userDict[name][2] != "Free"):
 			sSocket.sendto("FAILURE".encode(), cAddress)
 		else:
