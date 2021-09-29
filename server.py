@@ -14,11 +14,12 @@ print("Port number: ",end="")
 port = int(input())
 #socket used to bind the port
 sSocket = socket(AF_INET, SOCK_DGRAM)
-sSocket.bind(("", port))
+sSocket.bind(('', port))
 print("Server is now receiving from port", port)
 
 while True:
 	oriMessage, cAddress = sSocket.recvfrom(2048)
+	print("received", cAddress)
     #decode messages
 	message = oriMessage.decode()
 	command = message.split(" ")[0]
@@ -35,7 +36,7 @@ while True:
 				else:
 					userDict[name] = [IPv4, port, "Free"]
 					sSocket.sendto("SUCCESS".encode(), cAddress)
-			
+
 		else:
 			sSocket.sendto("FAILURE".encode(), cAddress)
 		
