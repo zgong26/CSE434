@@ -46,22 +46,29 @@ while True:
 
     if command == "setup-dht":
         n = message.split(" ")[1]
+        n = int(n)
         name = message.split(" ")[2]
-        if DHT_setup == True or n < 2 or not userDict.has_key(name) or n > len(userDict):
+        if DHT_setup == True or n < 2 or name not in userDict or n > len(userDict):
             sSocket.sendto("FAILURE".encode(), cAddress)
         else:
             userDict[name][2] = "Leader"
             #append the leader to the first part of DHT
-            DHTList.append(name, userDict[name][0], userDict[name][1])
+            DHTList.append(tuple([name, userDict[name][0], userDict[name][1]]))
+            #randomly choose n-1 free users and set their status to InDHT
             tempDict = userDict.copy()
             del tempDict[name]
-            list(tempDict.keys())
-            selectedName = random.sample(list, k=(n-1))
+            selectedName = random.sample(tempDict.keys(), n-1)
             for w in selectedName:
                 userDict[w][2] = "InDHT"
-                DHTList.append(w, userDict[w][0], userDict[w][1])
+                DHTList.append(tuple([w, userDict[w][0], userDict[w][1]]))
             DHT_setup = True
-            sSocket.sendto("SUCCESS".encode(), cAddress)
+            #test
+            result = "SUCCESS "
+            for t in DHTList:
+                result += t[0]
+                result += " "
+            #endoftest
+            sSocket.sendto(result.encode(), cAddress)
 
     if command == "query-dht":
         name = message.split(" ")[1]
