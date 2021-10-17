@@ -80,4 +80,6 @@ while True:
         name = message.split(" ")[1]
         if(userDict[name][2] != "Leader"):
             sSocket.sendto("FAILURE".encode(), cAddress)
+        else:
+            sSocket.sendto("SUCCESS".encode(), cAddress)
         #Check if complete
