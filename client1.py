@@ -39,6 +39,9 @@ def recev():
     while True:
         global identifier
         global ringSize
+        global message
+        global leftNei
+        global rightNei
         receivedMessage, serverAddress = cSocket.recvfrom(2048)
         recMsg = receivedMessage.decode()
         if(recMsg[0:7] == "SUCCESS"):
@@ -57,6 +60,12 @@ def recev():
             DHTList = []
             for x in range(0, int(ringSize*3), 3):
                 DHTList.append(tuple([msgArr[x], msgArr[x+1], msgArr[x+2]]))
+            rightNei.append(DHTList[1][0])
+            rightNei.append(DHTList[1][1])
+            rightNei.append(DHTList[1][2])
+            leftNei.append(DHTList[int(-1%ringSize)][0])
+            leftNei.append(DHTList[int(-1%ringSize)][1])
+            leftNei.append(DHTList[int(-1%ringSize)][2])
             for t in range(1, int(ringSize)):
                 sendMsg = "set-id " + str(t) + " " + str(int(ringSize)) + " " + DHTList[(t-1)%int(ringSize)][0] + " "+ DHTList[(t-1)%int(ringSize)][1] + " " + DHTList[(t-1)%int(ringSize)][2] + " " + DHTList[(t+1)%int(ringSize)][0] + " " + DHTList[(t+1)%int(ringSize)][1] + " " + DHTList[(t+1)%int(ringSize)][2]
                 cSocket.sendto(sendMsg.encode(), (DHTList[t][1], int(DHTList[t][2])))
@@ -91,13 +100,15 @@ def recev():
                                 
                     else:
                         #message format for passsing through peers:
-                        #construct pos id row[0]...row[8]
+                        #construct pos id row[0]...row[8] and split them by dollar sigh
                         sendMsg = "construct$"+ str(pos) + "$" + str(peerID)
                         for x in range(0, 9):
                             sendMsg += "$"
                             sendMsg += row[x]
                         cSocket.sendto(sendMsg.encode(), (DHTList[1][1], int(DHTList[1][2])))
                 msg = "dht-complete " + DHTList[0][0]
+                #change message value to avoid repeating
+                message = ""
                 cSocket.sendto(msg.encode(), (serverIP, serverPort))
 
 
@@ -110,8 +121,6 @@ def recev():
             msgArr.pop(0)
             ringSize = int(msgArr[0])
             msgArr.pop(0)
-            global leftNei
-            global rightNei
             #store left/right neighbors' information
             leftNei.append(msgArr[0])
             leftNei.append(msgArr[1])
@@ -128,7 +137,24 @@ def recev():
             else:
                 cSocket.sendto(recMsg.encode(), (rightNei[1], int(rightNei[2])))
 
-            
+        #if(recMsg[0:7] == "SUCCESS" and message[0:9] == "query-dht"):
+            #msgArr = recMsg.split()
+            #msgArr.pop(0)
+            #here query message is defined as: query "long name"
+            #cSocket.sendto(msgIn.encode(), (msgArr[1], int(msgArr[2])))
+
+        if(recMsg[0:11] == "querySearch"):
+            msgArr = recMsg.split("$")
+            ascii_sum = 0
+            for ele in msgArr[1]:
+                ascii_sum += ord(ele)
+            pos = ascii_sum % 353
+            peerID = pos%ringSize
+            if(peerID == identifier):
+                print("Query found. Info: " + str(localDHT[pos]))
+            else:
+                cSocket.sendto(recMsg.encode(), (rightNei[1], int(rightNei[2])))
+
 t1 = threading.Thread(target = keyboard_in)
 t2 = threading.Thread(target = recev)
 

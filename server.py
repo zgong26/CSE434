@@ -73,8 +73,15 @@ while True:
         if(DHT_setup == False or name not in userDict or userDict[name][2] != "Free"):
             sSocket.sendto("FAILURE".encode(), cAddress)
         else:
-            sSocket.sendto("SUCCESS".encode(), cAddress)
-            sSocket.sendto(DHTList[random.randrange(0, len(DHTList), 1)].encode(), cAddress)
+            randNum = random.randrange(0, len(DHTList), 1)
+            returnMsg = "SUCCESS " + str(DHTList[randNum][0]) + " " + str(DHTList[randNum][1]) + " " + str(DHTList[randNum][2])
+            sSocket.sendto(returnMsg.encode(), cAddress)
+
+    if message[0:7] == "query \"":
+        msgArr = message.split("\"")
+        longName = "querySearch$" + msgArr[1]
+        sSocket.sendto(longName.encode(), (DHTList[0][1], int(DHTList[0][2])))
+
 
     if command == "dht-complete":
         name = message.split(" ")[1]
