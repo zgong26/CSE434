@@ -62,12 +62,9 @@ while True:
                 userDict[w][2] = "InDHT"
                 DHTList.append(tuple([w, userDict[w][0], userDict[w][1]]))
             DHT_setup = True
-            #test
-            result = "SUCCESS "
+            result = "SUCCESS"
             for t in DHTList:
-                result += t[0]
-                result += " "
-            #endoftest
+                result += " " + t[0] + " " + t[1] + " " + t[2]
             sSocket.sendto(result.encode(), cAddress)
 
     if command == "query-dht":
