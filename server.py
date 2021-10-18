@@ -62,10 +62,10 @@ while True:
                 userDict[w][2] = "InDHT"
                 DHTList.append(tuple([w, userDict[w][0], userDict[w][1]]))
             DHT_setup = True
-            result = "SUCCESS"
+            result = "SUCCESS_set"
             for t in DHTList:
                 result += " " + t[0] + " " + t[1] + " " + t[2]
-            sSocket.sendto(result.encode(), cAddress)
+            sSocket.sendto(result.encode(), (DHTList[0][1], int(DHTList[0][2])))
 
     if command == "query-dht":
         name = message.split(" ")[1]
@@ -83,10 +83,35 @@ while True:
         sSocket.sendto(longName.encode(), (DHTList[0][1], int(DHTList[0][2])))
 
 
-    if command == "dht-complete":
+    if command == "leave-dht":
         name = message.split(" ")[1]
-        if(userDict[name][2] != "Leader"):
+        leaderName = message.split(" ")[2]
+        sSocket.sendto("DEL".encode(), (userDict[name][0], int(userDict[name][1])))
+        if(DHT_setup == False or userDict[name][2] == "Free"):
             sSocket.sendto("FAILURE".encode(), cAddress)
         else:
-            sSocket.sendto("SUCCESS".encode(), cAddress)
-        #Check if complete
+            #update userDict
+            if(leaderName != DHTList[0][0]):
+                userDict[leaderName][2] = "Leader"
+                userDict[DHTList[0][0]][2] = "InDHT"
+                userDict[name][2] = "Free"
+                index = 0
+                for ele in DHTList:
+                    if ele[0] == name:
+                        DHTList.remove(ele)
+                for ele in DHTList:
+                    if ele[0] == leaderName:
+                        DHTList.insert(0, DHTList.pop(index))
+                    else:
+                        index = index + 1
+            else:
+                userDict[name][2] = "Free"
+                for ele in DHTList:
+                    if ele[0] == name:
+                        DHTList.remove(ele)
+
+            sendMsg = "reset"
+            for t in DHTList:
+                sendMsg += " " + t[0] + " " + t[1] + " " + t[2]    
+            sSocket.sendto(sendMsg.encode(), (DHTList[0][1], int(DHTList[0][2])))
+

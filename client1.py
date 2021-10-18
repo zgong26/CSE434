@@ -40,6 +40,7 @@ def recev():
         global identifier
         global ringSize
         global message
+        global localDHT
         global leftNei
         global rightNei
         receivedMessage, serverAddress = cSocket.recvfrom(2048)
@@ -49,10 +50,17 @@ def recev():
         if(recMsg[0:7] == "FAILURE"):
             print("FAILURE")
 
+        if(recMsg[0:5] == "reset" or recMsg[0:3] == "DEL"):
+            localDHT.clear()
+            localDHT = [None] * 353
+            rightNei.clear()
+            leftNei.clear()
+
+
         #leader situation:
-        if(message[0:5] == "setup" and receivedMessage.decode()[0:7] == "SUCCESS"):
+        if(receivedMessage.decode()[0:11] == "SUCCESS_set" or receivedMessage.decode()[0:5] == "reset"):
             msgArr = recMsg.split()
-            #remove the first "SUCCESS" term
+            #remove the first "SUCCESS" or "reset" term
             msgArr.pop(0)
             ringSize = len(msgArr) / 3
             identifier = 0
@@ -69,8 +77,8 @@ def recev():
             for t in range(1, int(ringSize)):
                 sendMsg = "set-id " + str(t) + " " + str(int(ringSize)) + " " + DHTList[(t-1)%int(ringSize)][0] + " "+ DHTList[(t-1)%int(ringSize)][1] + " " + DHTList[(t-1)%int(ringSize)][2] + " " + DHTList[(t+1)%int(ringSize)][0] + " " + DHTList[(t+1)%int(ringSize)][1] + " " + DHTList[(t+1)%int(ringSize)][2]
                 cSocket.sendto(sendMsg.encode(), (DHTList[t][1], int(DHTList[t][2])))
-            #delay 2 seconds to wait for peers to initialize
-            time.sleep(2)
+            #delay 1 second to wait for peers to initialize
+            time.sleep(1)
             #leader parses the CSV file
             filename = "StatsCountry.csv"
             rows = []
@@ -154,6 +162,8 @@ def recev():
                 print("Query found. Info: " + str(localDHT[pos]))
             else:
                 cSocket.sendto(recMsg.encode(), (rightNei[1], int(rightNei[2])))
+
+
 
 t1 = threading.Thread(target = keyboard_in)
 t2 = threading.Thread(target = recev)
