@@ -31,9 +31,6 @@ def keyboard_in():
         global message
         message = input()
         cSocket.sendto(message.encode(), (serverIP, serverPort))
-        #receivedMessage, serverAddress = cSocket.recvfrom(2048)
-        #recMsg = receivedMessage.decode()
-        #print(recMsg)
 
 def recev():
     while True:
@@ -50,9 +47,18 @@ def recev():
         if(recMsg[0:7] == "FAILURE"):
             print("FAILURE")
 
-        if(recMsg[0:5] == "reset" or recMsg[0:3] == "DEL"):
+        if recMsg[0:5] == "reset" or recMsg[0:3] == "DEL":
             localDHT.clear()
             localDHT = [None] * 353
+            rightNei.clear()
+            leftNei.clear()
+
+        if recMsg[0:4] == "tear":
+            localDHT.clear()
+            if(rightNei != []):
+                cSocket.sendto("tear".encode(), (rightNei[1], int(rightNei[2])))
+            else:
+                print("Teardown DHT complete")
             rightNei.clear()
             leftNei.clear()
 

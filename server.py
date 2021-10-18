@@ -43,6 +43,8 @@ while True:
 
     if command == "deregister":
         name = message.split(" ")[1]
+        userDict[name][2] = "Free"
+        sSocket.sendto("SUCCESS".encode(), cAddress)
 
     if command == "setup-dht":
         n = message.split(" ")[1]
@@ -114,4 +116,22 @@ while True:
             for t in DHTList:
                 sendMsg += " " + t[0] + " " + t[1] + " " + t[2]    
             sSocket.sendto(sendMsg.encode(), (DHTList[0][1], int(DHTList[0][2])))
+
+    if command == "join-dht":
+        name = message.split(" ")[1]
+        DHTList.append(tuple([name, userDict[name][0], userDict[name][1]]))
+        #update status
+        userDict[name][2] = "InDHT"
+        sendMsg = "reset"
+        for t in DHTList:
+            sendMsg += " " + t[0] + " " + t[1] + " " + t[2]
+        sSocket.sendto(sendMsg.encode(), (DHTList[0][1], int(DHTList[0][2])))
+
+    if command == "teardown-dht":
+        name = message.split(" ")[1]
+        #handle if not leader situation
+        if userDict[name][2] != "Leader":
+            sSocket.sendto("FAILURE".encode(), cAddress)
+        else:
+            sSocket.sendto("tear".encode(), (DHTList[0][1], int(DHTList[0][2])))
 
